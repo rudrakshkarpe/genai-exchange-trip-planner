@@ -103,7 +103,7 @@ class PlanningExecutor(AgentExecutor):
         if not context.current_task:
             await updater.submit()
         await updater.start_work()
-        asyncio.create_task(self._process_request(
+        await asyncio.create_task(self._process_request(
             types.UserContent(
                 parts=convert_a2a_parts_to_genai(context.message.parts),
             ),
