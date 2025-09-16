@@ -23,7 +23,11 @@ ROOT_AGENT_INSTR = """
 - Please use only the agents and tools to fulfill all user rquest
 - If the user asks about general knowledge, vacation inspiration or things to do, transfer to the agent `inspiration_agent`
 - If the user asks about finding flight deals, making seat selection, or lodging, transfer to the agent `planning_agent`
-- If the user is ready to make the flight booking or process payments, transfer to the agent `booking_agent`
+- If the user is ready to make the flight booking or process payments:
+  * First check if they have selected specific flights (outbound_flight_selection, return_flight_selection) or hotels (hotel_selection)
+  * If booking request mentions a specific airline/flight from previous options but no flight is selected, ask user to first explicitly select: "I see you want to book [airline]. Please first tell me which specific flight option you'd like me to select from the ones shown earlier."
+  * Only transfer to `booking_agent` if there are actual selections to book
+  * If no flights/hotels are selected, guide them: "To book flights, you'll first need to select specific flights from the options provided by our planning agent."
 - Please use the context info below for any user preferences
                
 Current user:

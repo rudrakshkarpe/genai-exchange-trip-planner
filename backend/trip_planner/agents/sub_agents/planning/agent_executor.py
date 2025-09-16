@@ -47,8 +47,10 @@ class PlanningExecutor(AgentExecutor):
         task_updater: TaskUpdater,
         context: RequestContext,
     ) -> None:
-        print("What's the context? ", print(context.metadata.get("state") if context.metadata else None))
-        session_obj = await self._upsert_session(session_id, context.metadata.get("state") if context.metadata else None)
+        print("Processing request with context metadata:", context.metadata)
+        state_data = context.metadata.get("state") if context.metadata else None
+        print("Extracted state data:", state_data)
+        session_obj = await self._upsert_session(session_id, state_data)
         session_id = session_obj.id
 
         async for event in self._run_agent(session_id, new_message):
@@ -59,7 +61,7 @@ class PlanningExecutor(AgentExecutor):
                 print(f"EVENT_QUEUE: Adding final artifact: {parts}")
                 logger.debug("Yielding final response: %s", parts)
                 await task_updater.add_artifact(parts)
-                await task_updater.complete()
+                # await task_updater.complete()
                 break
             if not event.get_function_calls():
                 update_parts = convert_genai_parts_to_a2a(
@@ -128,14 +130,23 @@ class PlanningExecutor(AgentExecutor):
             app_name=self.runner.app_name, user_id="planning_agent", session_id=session_id
         )
         if session is None:
+            print(f"Creating new session {session_id} with state: {state}")
             session = await self.runner.session_service.create_session(
                 app_name=self.runner.app_name,
                 user_id="planning_agent",
                 session_id=session_id,
-                state=state
+                state=state or {}
             )
+        else:
+            # Update existing session with new state if provided
+            if state:
+                print(f"Updating existing session {session_id} with new state: {state}")
+                session.state.update(state)
+        
         if session is None:
             raise RuntimeError(f"Failed to get or create session: {session_id}")
+        
+        print(f"Session {session_id} final state: {session.state.to_dict() if hasattr(session.state, 'to_dict') else dict(session.state)}")
         return session
 
 

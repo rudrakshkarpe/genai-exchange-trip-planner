@@ -25,8 +25,8 @@ from google.adk.tools import ToolContext
 
 from trip_planner.agents.shared_libraries import constants
 
-SAMPLE_SCENARIO_PATH = os.getenv(
-    "TRAVEL_CONCIERGE_SCENARIO", "travel_concierge/profiles/itinerary_empty_default.json"
+SAMPLE_SCENARIO_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "..", "profiles", "itinerary_empty_default.json"
 )
 
 

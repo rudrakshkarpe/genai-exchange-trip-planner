@@ -45,7 +45,7 @@ async def async_main():
         examples=[""],
     )
     agent_card = AgentCard(
-        name="inspiration_agent",
+        name="Inspiration Agent (A2A)",
         description="You are a travel inpiration agent who inspires users, and discover their next vacations. Provide information about places, activities, interests for the users at the destination.",
         url=f"http://{host}:{port}/",
         version="1.0.0",

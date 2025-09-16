@@ -28,9 +28,9 @@ from google.genai import types
 from google.adk import Agent
 from google.adk.tools import FunctionTool
 
-from agent_host.remote_agent_connection import RemoteAgentConnections
-from agent_host import prompt
-from agent_host.tools import _load_precreated_itinerary
+from .remote_agent_connection import RemoteAgentConnections
+from . import prompt
+from .tools import _load_precreated_itinerary
 
 load_dotenv("../../.env")
 nest_asyncio.apply()
@@ -182,21 +182,57 @@ class HostAgent:
     async def send_message(self, agent_name: str, task: str, tool_context: ToolContext):
         """Sends a task to a remote agent: Inspiration agent, Planning agent, booking agent, Pre-Trip agent, In-Trip agent or Post-Trip agent."""
         print("Available agents:---------------------", self.remote_agent_connections.keys())
-        formatted = " ".join(word.capitalize() for word in agent_name.split("_"))
-        formatted_agent_name = f"{formatted} (A2A)"
-        print("send_message called with agent_name:---------------------", formatted_agent_name)
-        if formatted_agent_name not in self.remote_agent_connections:
-            raise ValueError(f"Agent {formatted_agent_name} not found")
-        client = self.remote_agent_connections[formatted_agent_name]
+        
+        # Try multiple naming patterns to find the agent
+        possible_names = [
+            f"{' '.join(word.capitalize() for word in agent_name.split('_'))} (A2A)",  # "Inspiration Agent (A2A)"
+            agent_name,  # "inspiration_agent" 
+            agent_name.lower(),  # "inspiration_agent"
+            agent_name.replace("_", " ").title() + " (A2A)",  # "Inspiration Agent (A2A)" (alternative formatting)
+        ]
+        
+        client = None
+        matched_agent_name = None
+        
+        for possible_name in possible_names:
+            if possible_name in self.remote_agent_connections:
+                client = self.remote_agent_connections[possible_name]
+                matched_agent_name = possible_name
+                break
+        
+        print("send_message called with agent_name:---------------------", agent_name)
+        print("Trying possible names:", possible_names)
+        print("Matched agent:", matched_agent_name)
+        
+        if not client or not matched_agent_name:
+            raise ValueError(f"Agent not found for '{agent_name}'. Tried names: {possible_names}. Available agents: {list(self.remote_agent_connections.keys())}")
 
         if not client:
-            raise ValueError(f"Client not available for {formatted_agent_name}")
+            raise ValueError(f"Client not available for {matched_agent_name}")
 
         # Simplified task and context ID management
         state = tool_context.state
         existing_task_id = state.get("task_id")
         context_id = state.get("context_id", str(uuid.uuid4()))
         message_id = str(uuid.uuid4())
+
+        # Ensure user_profile is in the state
+        if "user_profile" not in state:
+            print("WARNING: user_profile not found in state, adding default")
+            state["user_profile"] = {
+                "passport_nationality": "US Citizen",
+                "seat_preference": "window",
+                "food_preference": "vegan",
+                "allergies": [],
+                "likes": [],
+                "dislikes": [],
+                "price_sensitivity": [],
+                "home": {
+                    "event_type": "home",
+                    "address": "6420 Sequence Dr #400, San Diego, CA 92121, United States",
+                    "local_prefer_mode": "drive"
+                }
+            }
 
         message = {
             "role": "user",
@@ -209,11 +245,15 @@ class HostAgent:
         if existing_task_id:
             message["task_id"] = existing_task_id
 
+        # Convert state to dict and ensure it includes user_profile
+        state_dict = state.to_dict() if hasattr(state, 'to_dict') else dict(state)
+        
         payload = {
             "message": message,
-            "metadata": {"state": state.to_dict()},
+            "metadata": {"state": state_dict},
         }
 
+        print("State being sent:-----------------", state_dict)
         print("payload sending:-----------------", payload)
 
         message_request = SendMessageRequest(
@@ -222,30 +262,46 @@ class HostAgent:
 
         print("Message request ------------------", message_request)
 
-        send_response: SendMessageResponse = await client.send_message(message_request)
-        print("send_response", send_response)
+        try:
+            send_response: SendMessageResponse = await client.send_message(message_request)
+            print("send_response", send_response)
 
-        # On first call, server returns a Task; capture and persist its id
-        if isinstance(send_response.root, SendMessageSuccessResponse) and isinstance(send_response.root.result, Task):
-            state["task_id"] = send_response.root.result.id
-            state["context_id"] = send_response.root.result.context_id  # prefer server’s context if provided
+            # On first call, server returns a Task; capture and persist its id
+            if isinstance(send_response.root, SendMessageSuccessResponse) and isinstance(send_response.root.result, Task):
+                state["task_id"] = send_response.root.result.id
+                state["context_id"] = send_response.root.result.context_id  # prefer server's context if provided
+                print(f"Updated state with task_id: {state['task_id']} and context_id: {state['context_id']}")
 
-        if not isinstance(
-            send_response.root, SendMessageSuccessResponse
-        ) or not isinstance(send_response.root.result, Task):
-            print("Received a non-success or non-task response. Cannot proceed.")
-            return
+            if not isinstance(
+                send_response.root, SendMessageSuccessResponse
+            ) or not isinstance(send_response.root.result, Task):
+                print(f"ERROR: Received a non-success or non-task response: {send_response}")
+                return f"Error: Received invalid response from {matched_agent_name}"
 
-        response_content = send_response.root.model_dump_json(exclude_none=True)
-        json_content = json.loads(response_content)
-        print("response received: ", json_content)
+            response_content = send_response.root.model_dump_json(exclude_none=True)
+            json_content = json.loads(response_content)
+            print("response received: ", json_content)
 
-        resp = []
-        if json_content.get("result", {}).get("artifacts"):
-            for artifact in json_content["result"]["artifacts"]:
-                if artifact.get("parts"):
-                    resp.extend(artifact["parts"])
-        return resp
+            resp = []
+            if json_content.get("result", {}).get("artifacts"):
+                for artifact in json_content["result"]["artifacts"]:
+                    if artifact.get("parts"):
+                        resp.extend(artifact["parts"])
+            
+            if not resp:
+                # If no artifacts, check for task status or message
+                if json_content.get("result", {}).get("status"):
+                    return f"Task status: {json_content['result']['status']}"
+                else:
+                    return "Task submitted successfully"
+            
+            return resp
+            
+        except Exception as e:
+            print(f"ERROR: Failed to send message to {matched_agent_name}: {e}")
+            import traceback
+            traceback.print_exc()
+            return f"Error communicating with {matched_agent_name}: {str(e)}"
 
 
 def _get_initialized_host_agent_sync():

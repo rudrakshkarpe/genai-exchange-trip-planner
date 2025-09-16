@@ -23,9 +23,14 @@ from google.adk.agents.callback_context import CallbackContext
 from google.adk.sessions.state import State
 from google.adk.tools import ToolContext
 
-from agent_host import constants
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from shared_libraries import constants
 
-SAMPLE_SCENARIO_PATH = os.path.join("agent_host", "itinerary_empty_default.json")
+SAMPLE_SCENARIO_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "..", "profiles", "itinerary_empty_default.json"
+)
 
 
 def memorize_list(key: str, value: str, tool_context: ToolContext):

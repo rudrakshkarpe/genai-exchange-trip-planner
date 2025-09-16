@@ -43,8 +43,9 @@ class BookingExecutor(AgentExecutor):
         new_message: types.Content,
         session_id: str,
         task_updater: TaskUpdater,
+        context: RequestContext = None,
     ) -> None:
-        session_obj = await self._upsert_session(session_id)
+        session_obj = await self._upsert_session(session_id, context)
         session_id = session_obj.id
 
         async for event in self._run_agent(session_id, new_message):
@@ -53,12 +54,12 @@ class BookingExecutor(AgentExecutor):
                     event.content.parts if event.content and event.content.parts else []
                 )
                 logger.debug("Yielding final response: %s", parts)
-                task_updater.add_artifact(parts)
-                task_updater.complete()
+                await task_updater.add_artifact(parts)
+                await task_updater.complete()
                 break
             if not event.get_function_calls():
                 logger.debug("Yielding update response")
-                task_updater.update_status(
+                await task_updater.update_status(
                     TaskState.working,
                     message=task_updater.new_agent_message(
                         convert_genai_parts_to_a2a(
@@ -83,28 +84,80 @@ class BookingExecutor(AgentExecutor):
 
         updater = TaskUpdater(event_queue, context.task_id, context.context_id)
         if not context.current_task:
-            updater.submit()
-        updater.start_work()
+            await updater.submit()
+        await updater.start_work()
         await self._process_request(
             types.UserContent(
                 parts=convert_a2a_parts_to_genai(context.message.parts),
             ),
             context.context_id,
             updater,
+            context,
         )
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue):
         raise ServerError(error=UnsupportedOperationError())
 
-    async def _upsert_session(self, session_id: str):
+    async def _upsert_session(self, session_id: str, context: RequestContext = None):
         session = await self.runner.session_service.get_session(
             app_name=self.runner.app_name, user_id="booking_agent", session_id=session_id
         )
         if session is None:
+            # Extract state from request context if available
+            initial_state = {}
+            if context and hasattr(context, 'metadata') and context.metadata:
+                metadata_state = context.metadata.get('state', {})
+                if metadata_state:
+                    initial_state = metadata_state
+                    print(f"DEBUG: Using state from context metadata: {initial_state}")
+            
+            # Ensure user_profile exists with fallback to default
+            if 'user_profile' not in initial_state:
+                print("DEBUG: No user_profile in context, adding default")
+                initial_state['user_profile'] = {
+                    "passport_nationality": "US Citizen",
+                    "seat_preference": "window",
+                    "food_preference": "vegan",
+                    "allergies": [],
+                    "likes": [],
+                    "dislikes": [],
+                    "price_sensitivity": [],
+                    "home": {
+                        "event_type": "home",
+                        "address": "6420 Sequence Dr #400, San Diego, CA 92121, United States",
+                        "local_prefer_mode": "drive"
+                    }
+                }
+            
+            # Ensure all booking template variables exist with defaults
+            booking_defaults = {
+                'itinerary': initial_state.get('itinerary', {}),
+                'origin': initial_state.get('origin', ''),
+                'destination': initial_state.get('destination', ''),
+                'start_date': initial_state.get('start_date', ''),
+                'end_date': initial_state.get('end_date', ''),
+                'outbound_flight_selection': initial_state.get('outbound_flight_selection', ''),
+                'outbound_seat_number': initial_state.get('outbound_seat_number', ''),
+                'return_flight_selection': initial_state.get('return_flight_selection', ''),
+                'return_seat_number': initial_state.get('return_seat_number', ''),
+                'hotel_selection': initial_state.get('hotel_selection', ''),
+                'room_selection': initial_state.get('room_selection', ''),
+            }
+            
+            # Add booking defaults to state
+            initial_state.update(booking_defaults)
+            
+            # Add current time for template substitution
+            from datetime import datetime
+            initial_state['_time'] = str(datetime.now())
+            
+            print(f"DEBUG: Creating session with state: {initial_state}")
+            
             session = await self.runner.session_service.create_session(
                 app_name=self.runner.app_name,
                 user_id="booking_agent",
                 session_id=session_id,
+                state=initial_state,
             )
         if session is None:
             raise RuntimeError(f"Failed to get or create session: {session_id}")

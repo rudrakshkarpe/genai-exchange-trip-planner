@@ -12,17 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Constants used as keys into ADK's session state."""
+"""Constants used as keys into ADK's session state - deprecated, use shared_libraries.constants instead."""
 
-SYSTEM_TIME = "_time"
-ITIN_INITIALIZED = "_itin_initialized"
-
-ITIN_KEY = "itinerary"
-PROF_KEY = "user_profile"
-
-ITIN_START_DATE = "itinerary_start_date"
-ITIN_END_DATE = "itinerary_end_date"
-ITIN_DATETIME = "itinerary_datetime"
-
-START_DATE = "start_date"
-END_DATE = "end_date"
+# Import from shared constants to maintain compatibility
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from shared_libraries.constants import *

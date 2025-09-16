@@ -26,7 +26,7 @@ BOOKING_AGENT_INSTR = """
   - <itinerary/>, 
   - <outbound_flight_selection/>, <return_flight_selection/>, and 
   - <hotel_selection/>
-  There is nothing to do, transfer back to the root_agent.
+  Then respond with: "I don't see any flights or hotels selected for booking yet. To book flights, please first ask our planning agent to show you flight options, then explicitly select which specific flight you'd like to book. For example, say 'I'd like to select the ANA flight for $750' after seeing the flight options."
 - Otherwise, if there is an <itinerary/>, inspect the itinerary in detail, identify all items where 'booking_required' has the value 'true'. 
 - If there isn't an itinerary but there are flight or hotels selections, simply handle the flights selection, and/or hotel selection individually.
 - Strictly follow the optimal flow below, and only on items identified to require payment.
