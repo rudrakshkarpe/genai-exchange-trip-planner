@@ -37,6 +37,6 @@ class RemoteAgentConnections:
     async def send_message(
         self, message_request: SendMessageRequest
     ) -> SendMessageResponse:
-        print("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+        print("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", message_request)
         print(message_request)
         return await self.agent_client.send_message(message_request)

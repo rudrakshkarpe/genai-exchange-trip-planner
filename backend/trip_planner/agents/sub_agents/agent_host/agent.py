@@ -122,7 +122,38 @@ class HostAgent:
             session = await self._runner.session_service.create_session(
                 app_name=self._agent.name,
                 user_id=self._user_id,
-                state={},
+                state={
+                        "user_profile" : {
+                            "passport_nationality" : "US Citizen",
+                            "seat_preference": "window",
+                            "food_preference": "vegan",
+                            "allergies": [],
+                            "likes": [],
+                            "dislikes": [],
+                            "price_sensitivity": [],    
+                            "home":
+                            {
+                                "event_type": "home",
+                                "address": "6420 Sequence Dr #400, San Diego, CA 92121, United States",
+                                "local_prefer_mode": "drive"
+                            }    
+                        },
+                        "itinerary": {},
+                        "origin" : "New York",
+                        "destination" : "",
+                        "start_date" : "",
+                        "end_date" : "",
+                        "outbound_flight_selection" : "",
+                        "outbound_seat_number" : "",
+                        "return_flight_selection" : "",
+                        "return_seat_number" : "",
+                        "hotel_selection" : "",
+                        "room_selection" : "",
+                        "poi" : "",
+                        "itinerary_datetime" : "",
+                        "itinerary_start_date" : "",
+                        "itinerary_end_date" : ""  
+                    },
                 session_id=session_id,
             )
         async for event in self._runner.run_async(
@@ -163,20 +194,24 @@ class HostAgent:
 
         # Simplified task and context ID management
         state = tool_context.state
-        task_id = state.get("task_id", str(uuid.uuid4()))
+        existing_task_id = state.get("task_id")
         context_id = state.get("context_id", str(uuid.uuid4()))
         message_id = str(uuid.uuid4())
 
+        message = {
+            "role": "user",
+            "parts": [{"type": "text", "text": task}],
+            "message_id": message_id,
+            "context_id": context_id,
+        }
+
+        # Only include task_id if we already have a valid one from a prior response
+        if existing_task_id:
+            message["task_id"] = existing_task_id
+
         payload = {
-            "message": {
-                "role": "user",
-                "parts": [
-                    {"type": "text", "text": task}
-                ],
-                "messageId": message_id,
-            },
-            "taskId": task_id,
-            "contextId": context_id,
+            "message": message,
+            "metadata": {"state": state.to_dict()},
         }
 
         print("payload sending:-----------------", payload)
@@ -184,8 +219,16 @@ class HostAgent:
         message_request = SendMessageRequest(
             id=message_id, params=MessageSendParams.model_validate(payload)
         )
+
+        print("Message request ------------------", message_request)
+
         send_response: SendMessageResponse = await client.send_message(message_request)
         print("send_response", send_response)
+
+        # On first call, server returns a Task; capture and persist its id
+        if isinstance(send_response.root, SendMessageSuccessResponse) and isinstance(send_response.root.result, Task):
+            state["task_id"] = send_response.root.result.id
+            state["context_id"] = send_response.root.result.context_id  # prefer server’s context if provided
 
         if not isinstance(
             send_response.root, SendMessageSuccessResponse
@@ -195,6 +238,7 @@ class HostAgent:
 
         response_content = send_response.root.model_dump_json(exclude_none=True)
         json_content = json.loads(response_content)
+        print("response received: ", json_content)
 
         resp = []
         if json_content.get("result", {}).get("artifacts"):
