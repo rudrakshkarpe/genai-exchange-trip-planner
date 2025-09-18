@@ -23,7 +23,7 @@ from google.adk.agents.callback_context import CallbackContext
 from google.adk.sessions.state import State
 from google.adk.tools import ToolContext
 
-from trip_planner.agents.shared_libraries import constants
+from shared_libraries import constants
 
 SAMPLE_SCENARIO_PATH = os.getenv(
     "TRAVEL_CONCIERGE_SCENARIO", "travel_concierge/profiles/itinerary_empty_default.json"

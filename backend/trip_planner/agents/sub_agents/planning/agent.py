@@ -17,9 +17,9 @@
 from google.adk.agents import Agent
 from google.adk.tools.agent_tool import AgentTool
 from google.genai.types import GenerateContentConfig
-from trip_planner.agents.shared_libraries import types
-from trip_planner.agents.sub_agents.planning import prompt
-from trip_planner.agents.sub_agents.planning.tools import memorize
+from shared_libraries import types
+import prompt
+from tools import memorize
 
 
 itinerary_agent = Agent(
