@@ -42,7 +42,7 @@ async def async_main():
         name="Booking Information",
         description="Given an itinerary, the agent completes the bookings of the items by handling payment choices and processing. The agent has access to tools to confirm reservation, show user's payment choices, and process payment.",
         tags=["booking", "payment", "transaction", "reservation", "payment choice"],
-        examples=[""],
+        examples=["Can you book the flights and hotels?", "Can you book the flight using Credit Card?"],
     )
     agent_card = AgentCard(
         name="Booking Agent (A2A)",

@@ -10,6 +10,9 @@ import nest_asyncio
 from a2a.client import A2ACardResolver
 from a2a.types import (
     AgentCard,
+    # GetTaskParams,
+    # GetTaskRequest,
+    # GetTaskResponse,
     MessageSendParams,
     SendMessageRequest,
     SendMessageResponse,
@@ -182,11 +185,15 @@ class HostAgent:
     async def send_message(self, agent_name: str, task: str, tool_context: ToolContext):
         """Sends a task to a remote agent: Inspiration agent, Planning agent, booking agent, Pre-Trip agent, In-Trip agent or Post-Trip agent."""
         print("Available agents:---------------------", self.remote_agent_connections.keys())
-        formatted = " ".join(word.capitalize() for word in agent_name.split("_"))
+        cleaned_name = agent_name
+        if cleaned_name.lower().startswith("agent "):
+            cleaned_name = cleaned_name[6:]  # remove first 6 chars: "Agent "
+        # Format the remaining name
+        formatted = " ".join(word.capitalize() for word in cleaned_name.split("_"))
         formatted_agent_name = f"{formatted} (A2A)"
         print("send_message called with agent_name:---------------------", formatted_agent_name)
         if formatted_agent_name not in self.remote_agent_connections:
-            raise ValueError(f"Agent {formatted_agent_name} not found")
+            raise ValueError(f"{formatted_agent_name} not found")
         client = self.remote_agent_connections[formatted_agent_name]
 
         if not client:
@@ -247,6 +254,56 @@ class HostAgent:
                     resp.extend(artifact["parts"])
         return resp
 
+    # async def send_message(self, agent_name: str, task: str, tool_context: ToolContext):
+    #     """Sends a task to a remote agent and waits for the final response."""
+    #     formatted = " ".join(word.capitalize() for word in agent_name.split("_"))
+    #     formatted_agent_name = f"{formatted} (A2A)"
+    #     if formatted_agent_name not in self.remote_agent_connections:
+    #         raise ValueError(f"Agent {formatted_agent_name} not found")
+    #     client = self.remote_agent_connections[formatted_agent_name]
+
+    #     if not client:
+    #         raise ValueError(f"Client not available for {formatted_agent_name}")
+
+    #     state = tool_context.state
+    #     # Use a new context_id for each message to ensure isolation
+    #     context_id = str(uuid.uuid4())
+    #     message_id = str(uuid.uuid4())
+
+    #     payload = {
+    #         "message": {
+    #             "role": "user",
+    #             "parts": [{"type": "text", "text": task}],
+    #             "message_id": message_id,
+    #             "context_id": context_id,
+    #         },
+    #         "metadata": {"state": state.to_dict()},
+    #     }
+
+    #     message_request = SendMessageRequest(
+    #         id=message_id, params=MessageSendParams.model_validate(payload)
+    #     )
+
+    #     # This call will now block and wait for the remote agent to finish
+    #     send_response: SendMessageResponse = await client.send_message(message_request)
+
+    #     if not isinstance(send_response.root, SendMessageSuccessResponse) or not isinstance(
+    #         send_response.root.result, Task
+    #     ):
+    #         raise ValueError("Did not receive a valid Task object from the agent.")
+
+    #     task_result = send_response.root.result
+
+    #     response_content = task_result.model_dump_json(exclude_none=True)
+    #     json_content = json.loads(response_content)
+
+    #     resp = []
+    #     if json_content.get("artifacts"):
+    #         for artifact in json_content["artifacts"]:
+    #             if artifact.get("parts"):
+    #                 resp.extend(artifact["parts"])
+    #     return resp
+
 
 def _get_initialized_host_agent_sync():
     """Synchronously creates and initializes the HostAgent."""
@@ -256,7 +313,7 @@ def _get_initialized_host_agent_sync():
         agent_urls = [
             "http://localhost:8001",  # Inspiration Agent
             "http://localhost:8002",  # Planning Agent
-            "http://localhost:8003",  # Booking Agent
+            # "http://localhost:8003",  # Booking Agent
             "http://localhost:8004",  # Pre-Trip Agent
             "http://localhost:8005",  # In-Trip Agent
             "http://localhost:8006",  # Post-Trip Agent

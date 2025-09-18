@@ -42,10 +42,10 @@ async def async_main():
         name="Inspiration Information",
         description="You are travel inspiration agent who help users find their next big dream vacation destinations and suggest activities for the users. You have access to tools to suggest destinations, find points of interests and activities at the destination, and show places on the map.",
         tags=["inspiration", "destination", "activities", "points of interest", "places", "map"],
-        examples=[""],
+        examples=["Design an itinerary for me to visit Paris in 5 days.", "What are the top attractions in Tokyo?"],
     )
     agent_card = AgentCard(
-        name="inspiration_agent",
+        name="Inspiration Agent (A2A)",
         description="You are a travel inpiration agent who inspires users, and discover their next vacations. Provide information about places, activities, interests for the users at the destination.",
         url=f"http://{host}:{port}/",
         version="1.0.0",

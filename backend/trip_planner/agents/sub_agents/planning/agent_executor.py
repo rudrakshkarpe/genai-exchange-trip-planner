@@ -59,7 +59,7 @@ class PlanningExecutor(AgentExecutor):
                 print(f"EVENT_QUEUE: Adding final artifact: {parts}")
                 logger.debug("Yielding final response: %s", parts)
                 await task_updater.add_artifact(parts)
-                await task_updater.complete()
+                # await task_updater.complete()
                 break
             if not event.get_function_calls():
                 update_parts = convert_genai_parts_to_a2a(

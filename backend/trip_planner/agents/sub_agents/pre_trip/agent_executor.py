@@ -20,6 +20,8 @@ from google.adk.runners import Runner
 from google.adk.events import Event
 from google.genai import types
 
+from pprint import pprint
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -32,7 +34,7 @@ class PreTripExecutor(AgentExecutor):
         self._running_sessions = {}
 
     def _run_agent(
-        self, session_id, new_message: types.Content
+        self, session_id, new_message: types.Content,
     ) -> AsyncGenerator[Event, None]:
         return self.runner.run_async(
             session_id=session_id, user_id="pre_trip_agent", new_message=new_message
@@ -43,8 +45,10 @@ class PreTripExecutor(AgentExecutor):
         new_message: types.Content,
         session_id: str,
         task_updater: TaskUpdater,
+        context: RequestContext,
     ) -> None:
-        session_obj = await self._upsert_session(session_id)
+        print("What's the context? ", print(context.metadata.get("state") if context.metadata else None))
+        session_obj = await self._upsert_session(session_id, context.metadata.get("state") if context.metadata else None)
         session_id = session_obj.id
 
         async for event in self._run_agent(session_id, new_message):
@@ -52,22 +56,36 @@ class PreTripExecutor(AgentExecutor):
                 parts = convert_genai_parts_to_a2a(
                     event.content.parts if event.content and event.content.parts else []
                 )
+                print(f"EVENT_QUEUE: Adding final artifact: {parts}")
                 logger.debug("Yielding final response: %s", parts)
-                task_updater.add_artifact(parts)
-                task_updater.complete()
+                await task_updater.add_artifact(parts)
+                # await task_updater.complete()
                 break
             if not event.get_function_calls():
-                logger.debug("Yielding update response")
-                task_updater.update_status(
-                    TaskState.working,
-                    message=task_updater.new_agent_message(
-                        convert_genai_parts_to_a2a(
-                            event.content.parts
-                            if event.content and event.content.parts
-                            else []
-                        ),
-                    ),
+                update_parts = convert_genai_parts_to_a2a(
+                    event.content.parts
+                    if event.content and event.content.parts
+                    else []
                 )
+                # Log the intermediate message before it's sent to the queue
+                print(f"EVENT_QUEUE: Sending status update: {update_parts}")
+                logger.debug("Yielding update response")
+                await task_updater.update_status(
+                    TaskState.working,
+                    message=task_updater.new_agent_message(update_parts),
+                )
+            # if not event.get_function_calls():
+            #     logger.debug("Yielding update response")
+            #     await task_updater.update_status(
+            #         TaskState.working,
+            #         message=task_updater.new_agent_message(
+            #             convert_genai_parts_to_a2a(
+            #                 event.content.parts
+            #                 if event.content and event.content.parts
+            #                 else []
+            #             ),
+            #         ),
+            #     )
             else:
                 logger.debug("Skipping event")
 
@@ -83,20 +101,29 @@ class PreTripExecutor(AgentExecutor):
 
         updater = TaskUpdater(event_queue, context.task_id, context.context_id)
         if not context.current_task:
-            updater.submit()
-        updater.start_work()
-        await self._process_request(
+            await updater.submit()
+        await updater.start_work()
+        await asyncio.create_task(self._process_request(
             types.UserContent(
                 parts=convert_a2a_parts_to_genai(context.message.parts),
             ),
             context.context_id,
             updater,
-        )
+            context
+        ))
+        # await self._process_request(
+        #     types.UserContent(
+        #         parts=convert_a2a_parts_to_genai(context.message.parts),
+        #     ),
+        #     context.context_id,
+        #     updater,
+        #     context
+        # )
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue):
         raise ServerError(error=UnsupportedOperationError())
 
-    async def _upsert_session(self, session_id: str):
+    async def _upsert_session(self, session_id: str, state: dict | None = None):
         session = await self.runner.session_service.get_session(
             app_name=self.runner.app_name, user_id="pre_trip_agent", session_id=session_id
         )
@@ -105,6 +132,7 @@ class PreTripExecutor(AgentExecutor):
                 app_name=self.runner.app_name,
                 user_id="pre_trip_agent",
                 session_id=session_id,
+                state=state
             )
         if session is None:
             raise RuntimeError(f"Failed to get or create session: {session_id}")
