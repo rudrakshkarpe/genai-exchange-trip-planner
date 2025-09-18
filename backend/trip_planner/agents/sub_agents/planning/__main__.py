@@ -12,8 +12,8 @@ from a2a.types import (
     AgentCard,
     AgentSkill,
 )
-from trip_planner.agents.sub_agents.planning.agent import create_agent
-from trip_planner.agents.sub_agents.planning.agent_executor import PlanningExecutor
+from agent import create_agent
+from agent_executor import PlanningExecutor
 from dotenv import load_dotenv
 from google.adk.artifacts import InMemoryArtifactService
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
