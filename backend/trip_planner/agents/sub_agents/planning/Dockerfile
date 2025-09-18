@@ -15,7 +15,7 @@ WORKDIR /app
 COPY . ./
 
 # Set the working directory to the planning agent
-WORKDIR /app/backend/trip_planner/agents/sub_agents/planning
+WORKDIR /app
 
 # Set PYTHONPATH to include the backend directory for proper imports
 ENV PYTHONPATH="/app/backend"
