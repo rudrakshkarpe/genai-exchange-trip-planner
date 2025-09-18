@@ -33,7 +33,8 @@ def main():
 
 async def async_main():
     """Starts the agent server."""
-    host = "localhost"
+    # host = "localhost"
+    host = "0.0.0.0"
     port = 8002
 
     # agent metadata
