@@ -43,7 +43,7 @@ async def async_main():
         name="Pre Trip Information",
         description="You are a pre-trip assistant, who help users stay up to date with relevant travel information before their trip. You have access to tools to get latest travel advisories, weather updates, and suggest packing list for the users.",
         tags=["pre-trip", "travel advisories", "weather", "packing list"],
-        examples=[""],
+        examples=["Help me with the packing for my upcoming trip.", "Are there any travel advisories for my destination?"],
     )
     agent_card = AgentCard(
         name="Pre Trip Agent (A2A)",
