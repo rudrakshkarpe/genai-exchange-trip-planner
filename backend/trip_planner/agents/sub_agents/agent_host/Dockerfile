@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 8080
+EXPOSE 8000
 WORKDIR /app
 
 # Copy the entire repository to maintain proper package structure
@@ -22,4 +22,4 @@ ENV PYTHONPATH="/app/backend"
 
 RUN uv sync --verbose
 
-ENTRYPOINT ["uv", "run", ".", "--host", "0.0.0.0", "--port", "8002"]
+ENTRYPOINT ["uv", "run", ".", "--host", "0.0.0.0", "--port", "8000"]
