@@ -315,10 +315,10 @@ def _get_initialized_host_agent_sync():
     async def _async_main():
         # Hardcoded URLs for the friend agents
         agent_urls = [
-            # "https://inspiraiton-agent-683449264474.europe-west1.run.app", # Inspiration Agent
-            # "https://planning-agent-683449264474.europe-west1.run.app", # Planning Agent
-            "http://localhost:8001",  # Inspiration Agent
-            "http://localhost:8002",  # Planning Agent
+            "https://inspiraiton-agent-683449264474.europe-west1.run.app", # Inspiration Agent
+            "https://planning-agent-683449264474.europe-west1.run.app", # Planning Agent
+            #"http://localhost:8001",  # Inspiration Agent
+            #"http://localhost:8002",  # Planning Agent
             "http://localhost:8003",  # Booking Agent
             "http://localhost:8004",  # Pre-Trip Agent
             "http://localhost:8005",  # In-Trip Agent
