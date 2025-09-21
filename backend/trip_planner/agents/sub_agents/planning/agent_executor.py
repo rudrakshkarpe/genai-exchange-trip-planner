@@ -94,6 +94,7 @@ class PlanningExecutor(AgentExecutor):
         context: RequestContext,
         event_queue: EventQueue,
     ):
+        print(context)
         if not context.task_id or not context.context_id:
             raise ValueError("RequestContext must have task_id and context_id")
         if not context.message:
