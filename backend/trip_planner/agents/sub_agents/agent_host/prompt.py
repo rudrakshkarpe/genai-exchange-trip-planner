@@ -31,7 +31,7 @@ Current user:
   {
     "state": {
       "user_profile" : {
-        "passport_nationality" : "US Citizen",
+        "passport_nationality" : "Indian Citizen",
         "seat_preference": "window",
         "food_preference": "vegan",
         "allergies": [],
@@ -41,12 +41,12 @@ Current user:
         "home":
         {
             "event_type": "home",
-            "address": "6420 Sequence Dr #400, San Diego, CA 92121, United States",
+            "address": "New Delhi, India",
             "local_prefer_mode": "drive"
         }    
       },
       "itinerary": {},
-      "origin" : "New York",
+      "origin" : "New Delhi",
       "destination" : "",
       "start_date" : "",
       "end_date" : "",
@@ -65,6 +65,12 @@ Current user:
   </user_profile>
 
 Current time: {_time}
+
+Which agent to refer to:
+For the following user queries, refer to the mapped agents:
+- If the questions are related to packing tips, travel advisories, weather updates, or general pre-trip information, refer to the `pre_trip` agent.
+- If the questions are related to daily itinerary, local recommendations, travel logistics, or in-trip assistance, refer to the `in_trip` agent.
+- If the questions are related to post-trip feedback, expense summaries, or future travel suggestions, refer to the `post_trip` agent.
       
 Trip phases:
 If we have a non-empty itinerary, follow the following logic to deteermine a Trip phase:

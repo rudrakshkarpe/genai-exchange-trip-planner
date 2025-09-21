@@ -103,14 +103,14 @@ class InTripExecutor(AgentExecutor):
         if not context.current_task:
             await updater.submit()
         await updater.start_work()
-        await asyncio.create_task(self._process_request(
+        await self._process_request(
             types.UserContent(
                 parts=convert_a2a_parts_to_genai(context.message.parts),
             ),
             context.context_id,
             updater,
             context
-        ))
+        )
         # await self._process_request(
         #     types.UserContent(
         #         parts=convert_a2a_parts_to_genai(context.message.parts),

@@ -127,7 +127,7 @@ class HostAgent:
                 user_id=self._user_id,
                 state={
                         "user_profile" : {
-                            "passport_nationality" : "US Citizen",
+                            "passport_nationality" : "Indian Citizen",
                             "seat_preference": "window",
                             "food_preference": "vegan",
                             "allergies": [],
@@ -137,12 +137,12 @@ class HostAgent:
                             "home":
                             {
                                 "event_type": "home",
-                                "address": "6420 Sequence Dr #400, San Diego, CA 92121, United States",
+                                "address": "New Delhi, India",
                                 "local_prefer_mode": "drive"
                             }    
                         },
                         "itinerary": {},
-                        "origin" : "New York",
+                        "origin" : "New Delhi",
                         "destination" : "",
                         "start_date" : "",
                         "end_date" : "",
@@ -153,7 +153,7 @@ class HostAgent:
                         "hotel_selection" : "",
                         "room_selection" : "",
                         "poi" : "",
-                        "itinerary_datetime" : "",
+                        "itinerary_datetime" : "21 September 2025",
                         "itinerary_start_date" : "",
                         "itinerary_end_date" : ""  
                     },
@@ -190,6 +190,10 @@ class HostAgent:
             cleaned_name = cleaned_name[6:]  # remove first 6 chars: "Agent "
         # Format the remaining name
         formatted = " ".join(word.capitalize() for word in cleaned_name.split("_"))
+
+        # Ensure "Agent" is before (A2A)
+        if not formatted.lower().endswith("agent"):
+            formatted = f"{formatted} Agent"
         formatted_agent_name = f"{formatted} (A2A)"
         print("send_message called with agent_name:---------------------", formatted_agent_name)
         if formatted_agent_name not in self.remote_agent_connections:
@@ -311,16 +315,16 @@ def _get_initialized_host_agent_sync():
     async def _async_main():
         # Hardcoded URLs for the friend agents
         agent_urls = [
-            "https://inspiraiton-agent-683449264474.europe-west1.run.app", # Inspiration Agent
-            "https://planning-agent-683449264474.europe-west1.run.app", # Planning Agent
-            #"http://localhost:8001",  # Inspiration Agent
-            #"http://localhost:8002",  # Planning Agent
-            # "http://localhost:8003",  # Booking Agent
-            #"http://localhost:8004",  # Pre-Trip Agent
-            #"http://localhost:8005",  # In-Trip Agent
-            #"http://localhost:8006",  # Post-Trip Agent
+            # "https://inspiraiton-agent-683449264474.europe-west1.run.app", # Inspiration Agent
+            # "https://planning-agent-683449264474.europe-west1.run.app", # Planning Agent
+            "http://localhost:8001",  # Inspiration Agent
+            "http://localhost:8002",  # Planning Agent
+            "http://localhost:8003",  # Booking Agent
+            "http://localhost:8004",  # Pre-Trip Agent
+            "http://localhost:8005",  # In-Trip Agent
+            "http://localhost:8006",  # Post-Trip Agent
         ]
-        
+
         print("initializing host agent")
         hosting_agent_instance = await HostAgent.create(
             remote_agent_addresses=agent_urls
