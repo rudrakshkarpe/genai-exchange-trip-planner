@@ -19,6 +19,7 @@ from google.adk.artifacts import InMemoryArtifactService
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+import os
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
@@ -30,8 +31,9 @@ def main():
 async def async_main():
     """Starts the agent server."""
     # host = "localhost"
-    host = "0.0.0.0"
-    port = 8002
+    host = os.environ.get("A2A_HOST", "localhost")
+    port = int(os.environ.get("A2A_PORT", 8002))
+    url = os.environ.get("PUBLIC_URL", f"http://{host}:{port}/")
 
     # agent metadata
     capabilities = AgentCapabilities(streaming=True)
@@ -45,7 +47,7 @@ async def async_main():
     agent_card = AgentCard(
         name="Planning Agent (A2A)",
         description="You are a travel planning agent, helping users with travel planning, completing a full itinerary for their vacation, finding best deals for flights and hotels.",
-        url=f"http://{host}:{port}/",
+        url= f"{url}",
         version="1.0.0",
         defaultInputModes=["text"],
         defaultOutputModes=["text"],

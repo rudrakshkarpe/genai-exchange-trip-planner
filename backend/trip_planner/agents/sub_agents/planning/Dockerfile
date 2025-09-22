@@ -12,7 +12,7 @@ EXPOSE 8080
 WORKDIR /app
 
 # Copy the entire repository to maintain proper package structure
-COPY . ./
+COPY ./planning /app/backend/trip_planner/agents/sub_agents/planning
 
 # Set the working directory to the planning agent
 WORKDIR /app
@@ -22,4 +22,4 @@ ENV PYTHONPATH="/app/backend"
 
 RUN uv sync --verbose
 
-ENTRYPOINT ["uv", "run", ".", "--host", "0.0.0.0", "--port", "8002"]
+ENTRYPOINT ["uv", "run", ".", "--host", "0.0.0.0", "--port", "$PORT"]
