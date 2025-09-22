@@ -22,4 +22,4 @@ ENV PYTHONPATH="/app/backend"
 
 RUN uv sync --verbose
 
-ENTRYPOINT ["uv", "run", ".", "--host", "0.0.0.0", "--port", "$PORT"]
+ENTRYPOINT ["uv", "run", ".", "--host", "0.0.0.0", "--port", "8002"]

@@ -6,7 +6,7 @@
 
 # --- Configuration ---
 GOOGLE_CLOUD_LOCATION="europe-west1"
-REPO_NAME="genai-exchange-trip-planner"
+REPO_NAME="cloud-run-source-deploy"
 # ---------------------
 
 echo "--- Setting Google Cloud Environment Variables ---"
