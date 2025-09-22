@@ -66,6 +66,12 @@ gcloud builds submit . \
 
 echo "Image built and pushed to: ${IMAGE_PATH}"
 
+gcloud beta run services add-iam-policy-binding \
+  --region=europe-west1 \
+  --member=allUsers \
+  --role=roles/run.invoker planning-agent
+
+
 gcloud run deploy ${SERVICE_NAME} \
   --port=8002 \
   --image=${IMAGE_PATH} \
