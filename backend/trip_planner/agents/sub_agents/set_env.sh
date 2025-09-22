@@ -50,12 +50,6 @@ echo "Exported REGION=$GOOGLE_CLOUD_LOCATION"
 
 echo "--- Environment setup complete ---"
 
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
-  --member="serviceAccount:${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor" \
-  --role="roles/aiplatform.user"
-
-
 export IMAGE_TAG="latest"
 export AGENT_NAME="planning"
 export IMAGE_NAME="planning-agent"
@@ -85,7 +79,8 @@ gcloud run deploy ${SERVICE_NAME} \
   --set-env-vars="PUBLIC_URL=${PUBLIC_URL}" \
   --allow-unauthenticated \
   --project=${PROJECT_ID} \
-  --min-instances=1
+  --min-instances=1 \
+  --timeout=600
 
 export PLANNER_AGENT_URL=$(gcloud run services list --platform=managed --region=europe-west1 --format='value(URL)' | grep planning-agent)
 
