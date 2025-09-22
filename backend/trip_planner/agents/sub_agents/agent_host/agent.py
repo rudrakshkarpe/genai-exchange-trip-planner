@@ -162,6 +162,7 @@ class HostAgent:
         async for event in self._runner.run_async(
             user_id=self._user_id, session_id=session.id, new_message=content
         ):
+            print("Event from runner:", event)
             if event.is_final_response():
                 response = ""
                 if (
@@ -311,7 +312,7 @@ def _get_initialized_host_agent_sync():
     async def _async_main():
         # Hardcoded URLs for the friend agents
         agent_urls = [
-            "https://inspiraiton-agent-683449264474.europe-west1.run.app", # Inspiration Agent
+            #"https://inspiraiton-agent-683449264474.europe-west1.run.app", # Inspiration Agent
             "https://planning-agent-683449264474.europe-west1.run.app", # Planning Agent
             #"http://localhost:8001",  # Inspiration Agent
             #"http://localhost:8002",  # Planning Agent
