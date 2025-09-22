@@ -12,7 +12,7 @@ EXPOSE 8080
 WORKDIR /app
 
 # Copy the entire repository to maintain proper package structure
-COPY ./planning /app/backend/trip_planner/agents/sub_agents/planning
+COPY . ./
 
 # Set the working directory to the planning agent
 WORKDIR /app
